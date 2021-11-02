@@ -56,7 +56,7 @@ void Noise::runFire(CRGB leds[]) {
   }  
 
   FastLED.show();
-  delay(2);
+  delay(1000/60);
 }
 
 void Noise::runRainbowNoise(CRGB leds[]){
