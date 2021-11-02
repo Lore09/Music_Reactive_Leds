@@ -9,6 +9,12 @@ DEFINE_GRADIENT_PALETTE(GMT_hot_gp){
     95, 255, 0, 0,
     191, 255, 255, 0,
     255, 255, 255, 255};
+
+DEFINE_GRADIENT_PALETTE(heatmap_gp){
+    0, 0, 0, 0,          //black
+    128, 255, 0, 0,      //red
+    224, 255, 255, 0,    //bright yellow
+    255, 255, 255, 255}; //full white
 DEFINE_GRADIENT_PALETTE(xkcd_bath_gp){
     0, 1, 1, 1,
     59, 1, 1, 1,
@@ -51,7 +57,7 @@ public:
     void autoRunPalette(CRGB[], int);
 
 private:
-    CRGBPalette16 paletteArray[5] = {GMT_hot_gp, xkcd_bath_gp, bhw1_06_gp, bhw1_06_gp, GMT_seis_gp};
+    CRGBPalette16 paletteArray[5] = {heatmap_gp, xkcd_bath_gp, bhw1_06_gp, bhw1_06_gp, GMT_seis_gp};
     uint8_t colorIndex[N_LEDS];
     int paletteIndex;
     CRGBPalette16 currentPalette;
@@ -89,12 +95,14 @@ void ColorPalette::runPalette(CRGB leds[], int index, bool autoMode)
     else
         currentPalette = paletteArray[index];
 
-    for (int i = 0; i < N_LEDS; i++)
+    EVERY_N_MILLISECONDS(8)
     {
-        leds[i] = ColorFromPalette(currentPalette, colorIndex[i],255,LINEARBLEND);
-        colorIndex[i]++;
+        for (int i = 0; i < N_LEDS; i++)
+        {
+            leds[i] = ColorFromPalette(currentPalette, colorIndex[i], 200, LINEARBLEND);
+            colorIndex[i]++;
+        }
     }
 
-    delay(1000/60);
     FastLED.show();
 }
