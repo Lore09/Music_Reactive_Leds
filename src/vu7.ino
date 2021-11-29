@@ -12,7 +12,7 @@ uint8_t bgcol = 0;
 
 void vu7(boolean show_background) {
   
-  EVERY_N_MILLISECONDS(speed*100) {
+  EVERY_N_MILLISECONDS(1000) {
     peakspersec = peakcount; // Count the peaks per second. This value will become the foreground rippleHue.
     peakcount = 0; // Reset the counter every second.
   }
@@ -32,16 +32,14 @@ void soundmems() { // Rolling average counter - means we don't have to go throug
   static unsigned long samplesum;
   static unsigned long oldtime;
   unsigned long newtime = millis();
-  unsigned int sample = abs(analogRead(LEFT_IN_PIN) -544);//CAMBIO VALORI 512
+  unsigned int sample = abs(analogRead(LEFT_IN_PIN) -512);
   
   samplesum = samplesum + sample - volLeft[samplecount]; // Add the new sample and remove the oldest sample in the array 
   sampleavg = samplesum / SAMPLES; // Get an average
   volLeft[samplecount] = sample; // Update oldest sample in the array with new sample
   samplecount = (samplecount + 1) % SAMPLES; // Update the counter for the array
 
-
-  //CAMBIO VALORI QUA (50 100)
-  if ((sample > (sampleavg + 23)) && (newtime > (oldtime + 50))) { // Check for a peak, which is 50 > the average, but wait at least 100ms for another.
+  if ((sample > (sampleavg + 13)) && (newtime > (oldtime + 100))) { // Check for a peak, which is 50 > the average, but wait at least 100ms for another.
     rippleStep = -1;
     peakcount++;
     oldtime = newtime;
@@ -50,7 +48,7 @@ void soundmems() { // Rolling average counter - means we don't have to go throug
 
 void ripple3(bool show_background) {
 
-  const uint8_t MAX_STEPS = 21;//CAMBIO QUA 16
+  const uint8_t MAX_STEPS = 16;
   static int center = 0;
   
   if(show_background) {

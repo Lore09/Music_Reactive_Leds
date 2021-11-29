@@ -24,7 +24,7 @@ void vu6(bool is_centered, uint8_t channel) {
   if(height > *peak)
     *peak = height; // Keep 'peak' dot at top
   
-  EVERY_N_MILLISECONDS(speed) {hueOffset++;}
+  EVERY_N_MILLISECONDS(SPEED) {hueOffset++;}
 
   if(is_centered) {
     // Color pixels based on rainbow gradient

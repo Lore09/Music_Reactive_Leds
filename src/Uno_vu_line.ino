@@ -1,8 +1,7 @@
 // --------------------------------
 // -- VU Meter - Scott's version --
 // --------------------------------
-
-#include <IRremote.h>
+#include <IRremote.hpp>
 #include <ColorPalette.h>
 #include <FastLED.h>
 #include <Noise.h>
@@ -17,8 +16,8 @@
 #define MAX_MILLIAMPS 500  // Maximum current to draw [500]
 #define COLOR_ORDER GRB    // Colour order of LED strip [GRB]
 #define LED_TYPE WS2812B   // LED string type [WS2812B]
-#define DC_OFFSET 26       // DC offset in aux signal [0]
-#define NOISE 2            // Noise/hum/interference in aux signal [10]
+#define DC_OFFSET 360       // DC offset in aux signal [0]
+#define NOISE 3           // Noise/hum/interference in aux signal [10]
 #define SAMPLES 60         // Length of buffer for dynamic level adjustment [60]
 #define TOP (N_PIXELS + 2) // Allow dot to go slightly off scale [(N_PIXELS + 2)]
 #define PEAK_FALL 20       // Rate of peak falling dot [20]
@@ -30,21 +29,21 @@
 
 //-----------------------------------
 //---mappatura tasti telecomando
-#define BUTTON_ON_OFF 0xFF02FD
-#define BUTTON_AUTOMODE 0xFFF00F
-#define BUTTON_SPEED_UP 0xFFE817
-#define BUTTON_SPEED_DOWN 0xFFC837
-#define BUTTON_EFFECT_1 0xFF30CF
-#define BUTTON_EFFECT_2 0xFFB04F
-#define BUTTON_EFFECT_3 0xFF708F
-#define BUTTON_EFFECT_4 0xFF10EF
-#define BUTTON_EFFECT_5 0xFF906F
-#define BUTTON_EFFECT_6 0xFF50AF
-#define BUTTON_PALETTE_1 0xFF22DD
-#define BUTTON_PALETTE_2 0xFF12ED
-#define BUTTON_PALETTE_3 0xFF32CD
-#define BUTTON_PALETTE_4 0xFFF807
-#define BUTTON_PALETTE_5 0xFFD827
+#define BUTTON_ON_OFF 64
+#define BUTTON_AUTOMODE 65
+#define BUTTON_SPEED_UP 23
+#define BUTTON_SPEED_DOWN 19
+#define BUTTON_EFFECT_1 12
+#define BUTTON_EFFECT_2 13
+#define BUTTON_EFFECT_3 14
+#define BUTTON_EFFECT_4 8
+#define BUTTON_EFFECT_5 9
+#define BUTTON_EFFECT_6 10
+#define BUTTON_PALETTE_1 68
+#define BUTTON_PALETTE_2 72
+#define BUTTON_PALETTE_3 76
+#define BUTTON_PALETTE_4 31
+#define BUTTON_PALETTE_5 27
 
 uint8_t volCountLeft = 0; // Frame counter for storing past volume data
 int volLeft[SAMPLES];     // Collection of prior volume samples
@@ -81,10 +80,6 @@ int speed = 5;
 ColorPalette colorPalette = ColorPalette();
 Noise noise = Noise();
 
-//----IR------
-IRrecv irrecv(IR_DATA_IN);
-decode_results results;
-uint32_t previousVaulue = 0;
 
 void increaseSpeed()
 {
@@ -113,151 +108,140 @@ void decrementPushCounter()
 
 void readIR()
 {
+  while(!IrReceiver.isIdle());
 
-  while (!irrecv.isIdle())
-    delay(1); // if not idle, wait till complete
-
-  if (irrecv.decode(&results))
+  if (IrReceiver.decode())
   {
+    Serial.println(IrReceiver.decodedIRData.command);
 
-    digitalWrite(LED_PIN, HIGH);
-    Serial.println(results.value, HEX);
-
-    if (results.value == 0xFFFFFFFF)
-      results.value = previousVaulue;
-    else
+    switch (IrReceiver.decodedIRData.command)
     {
-      previousVaulue = results.value;
 
-      switch (results.value)
+    case BUTTON_ON_OFF:
+    {
+      if (!deviceOn)
       {
+        deviceOn = true;
+        Serial.println("Device ON");
 
-      case BUTTON_ON_OFF:
+        delay(200);
+      }
+      else
       {
-        if (!deviceOn)
-        {
-          deviceOn = true;
-          Serial.println("Device ON");
+        deviceOn = false;
+        Serial.println("Device OFF");
+        FastLED.clear();
+        FastLED.show();
 
-          delay(200);
-        }
-        else
-        {
-          deviceOn = false;
-          Serial.println("Device OFF");
-          FastLED.clear();
-          FastLED.show();
-
-          delay(200);
-        }
-        break;
+        delay(200);
       }
-
-      case BUTTON_AUTOMODE:
-      {
-        if (autoMode)
-        {
-          autoMode = false;
-          Serial.println("AutoMode OFF");
-        }
-        else
-        {
-          autoMode = true;
-          Serial.println("AutoMode ON");
-        }
-        break;
-      }
-
-      case BUTTON_SPEED_UP:
-      {
-        increaseSpeed();
-        Serial.print("Speed: ");
-        Serial.println(11 - speed);
-        break;
-      }
-
-      case BUTTON_SPEED_DOWN:
-      {
-        decreaseSpeed();
-        Serial.print("Speed: ");
-        Serial.println(11 - speed);
-        break;
-      }
-
-      //effetti
-      case BUTTON_EFFECT_1:
-        PushCounter = 0;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_EFFECT_2:
-        PushCounter = 1;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_EFFECT_3:
-        PushCounter = 2;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_EFFECT_4:
-        PushCounter = 3;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_EFFECT_5:
-        PushCounter = 4;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_EFFECT_6:
-        PushCounter = 5;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_PALETTE_1:
-        PushCounter = 6;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_PALETTE_2:
-        PushCounter = 7;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_PALETTE_3:
-        PushCounter = 8;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_PALETTE_4:
-        PushCounter = 9;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      case BUTTON_PALETTE_5:
-        PushCounter = 10;
-        Serial.print("Mode: ");
-        Serial.println(PushCounter + 1);
-        break;
-
-      default:
-        break;
-      }
+      break;
     }
 
-    irrecv.resume();
-    digitalWrite(LED_PIN, LOW);
+    case BUTTON_AUTOMODE:
+    {
+      if (autoMode)
+      {
+        autoMode = false;
+        Serial.println("AutoMode OFF");
+      }
+      else
+      {
+        autoMode = true;
+        Serial.println("AutoMode ON");
+      }
+      break;
+    }
+
+    case BUTTON_SPEED_UP:
+    {
+      increaseSpeed();
+      Serial.print("Speed: ");
+      Serial.println(11 - speed);
+      break;
+    }
+
+    case BUTTON_SPEED_DOWN:
+    {
+      decreaseSpeed();
+      Serial.print("Speed: ");
+      Serial.println(11 - speed);
+      break;
+    }
+
+    //effetti
+    case BUTTON_EFFECT_1:
+      PushCounter = 0;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_EFFECT_2:
+      PushCounter = 1;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_EFFECT_3:
+      PushCounter = 2;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_EFFECT_4:
+      PushCounter = 3;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_EFFECT_5:
+      PushCounter = 4;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_EFFECT_6:
+      PushCounter = 5;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_PALETTE_1:
+      PushCounter = 6;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_PALETTE_2:
+      PushCounter = 7;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_PALETTE_3:
+      PushCounter = 8;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_PALETTE_4:
+      PushCounter = 9;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    case BUTTON_PALETTE_5:
+      PushCounter = 10;
+      Serial.print("Mode: ");
+      Serial.println(PushCounter + 1);
+      break;
+
+    default:
+      
+      break;
+    }
+
+    IrReceiver.resume();
   }
 }
 
@@ -272,9 +256,10 @@ void setup()
 
   PushCounter = 0;
 
-  analogReference(INTERNAL);
-  irrecv.enableIRIn();
   pinMode(LED_PIN, OUTPUT);
+  analogReference(EXTERNAL);
+
+  IrReceiver.begin(IR_DATA_IN, ENABLE_LED_FEEDBACK, LED_PIN);
 
   Serial.begin(9600);
   Serial.print("Starting pattern ");
@@ -315,7 +300,7 @@ void loop()
         break;
 
       case 1:
-        vu7(true);
+        vu7(false);
         copyLeftToRight();
         break;
 
@@ -369,7 +354,6 @@ void loop()
 // -- VU functions --
 // ------------------
 
-
 uint16_t auxReading(uint8_t channel) {
 
   int n = 0;
@@ -377,7 +361,7 @@ uint16_t auxReading(uint8_t channel) {
 
   if(channel == 0) {
     int n = analogRead(LEFT_IN_PIN); // Raw reading from left line in
-    n = abs(n - 512 - DC_OFFSET); // Center on zero
+    n = abs(n - DC_OFFSET); // Center on zero
     n = (n <= NOISE) ? 0 : (n - NOISE); // Remove noise/hum
     lvlLeft = ((lvlLeft * 7) + n) >> 3; // "Dampened" reading else looks twitchy (>>3 is divide by 8)
     volLeft[volCountLeft] = n; // Save sample for dynamic leveling
@@ -388,7 +372,7 @@ uint16_t auxReading(uint8_t channel) {
   
   else {
     int n = analogRead(RIGHT_IN_PIN); // Raw reading from mic
-    n = abs(n - 512 - DC_OFFSET); // Center on zero
+    n = abs(n - DC_OFFSET); // Center on zero
     n = (n <= NOISE) ? 0 : (n - NOISE); // Remove noise/hum
     lvlRight = ((lvlRight * 7) + n) >> 3; // "Dampened" reading (else looks twitchy)
     volRight[volCountRight] = n; // Save sample for dynamic leveling

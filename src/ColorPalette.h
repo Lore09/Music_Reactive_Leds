@@ -95,7 +95,7 @@ void ColorPalette::runPalette(CRGB leds[], int index, bool autoMode)
     else
         currentPalette = paletteArray[index];
 
-    EVERY_N_MILLISECONDS(8)
+    EVERY_N_MILLISECONDS(20)
     {
         for (int i = 0; i < N_LEDS; i++)
         {
